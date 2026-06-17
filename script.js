@@ -6,13 +6,13 @@ const ADMIN = "6285117010280";
 const MENUS = [
     {label:"Americano Ice",harga:6000},{label:"Americano Double",harga:8000},
     {label:"Coffee Milk",harga:7000},{label:"Coffee Aren",harga:8000},
-    {label:"Coffee Milo",harga:10000},{label:"Coffee Honey",harga:10000},
-    {label:"Coffee Latte",harga:10000},{label:"Coffee Rimba",harga:11000},
+    {label:"Coffee Milo",harga:10000},{label:"Coffee Honey",harga:11000},
+    {label:"Coffee Latte",harga:10000},{label:"Rimba Signature",harga:11000},
     {label:"Salted Caramel",harga:12000},{label:"Vanilla Latte",harga:12000},
     {label:"Hazelnut Latte",harga:12000},{label:"Fresh Milk",harga:8000},
     {label:"Chocolate",harga:8000},{label:"Strawberry",harga:8000},
     {label:"Manggo",harga:8000},{label:"Thaitea",harga:8000},
-    {label:"Taro",harga:8000},{label:"Matcha",harga:9000},{label:"Milo",harga:9000},{label:"Gratis",harga:0}
+    {label:"Taro",harga:8000},{label:"Matcha",harga:9000},{label:"Milo",harga:9000},{label:"Avocado",harga:9000},{label:"Milky Caramel",harga:10000},{label:"Milky Hazelnut",harga:10000},{label:"Milky Vanilla",harga:10000},{label:"Gratis",harga:0}
 ];
 
 let cart = {};
