@@ -141,7 +141,6 @@
     </div>
 
     <div id="tab-penjualan" class="tab-content">
-        <!-- Fitur Baru: Tambah Menu Custom -->
         <div class="card">
             <div class="card-title">✨ Tambah Menu Custom</div>
             <div class="expense-input-row">
@@ -243,16 +242,13 @@
     <button class="nav-item" onclick="openTab('tab-riwayat',this)"><span class="nav-icon">📊</span><span class="nav-text">Riwayat</span></button>
 </div>
 
-<!-- Floating Cart Button -->
 <button id="float-cart-btn" onclick="openCartModal()">
     <span id="float-cart-badge">0</span>
     <span id="float-cart-total">Rp 0</span>
 </button>
 
-<!-- Fitur Baru: Floating Calculator Button -->
 <button id="float-calc-btn" onclick="toggleCalc()">🧮</button>
 
-<!-- Cart Modal Overlay -->
 <div id="cart-modal-overlay" class="modal-overlay" style="align-items:flex-end;" onclick="closeCartModal(event)">
     <div id="cart-modal">
         <div class="modal-header">
@@ -264,7 +260,7 @@
         </div>
         <div class="modal-body" id="modal-cart-items"></div>
         
-        <div class="input-group" style="margin-top:15px; margin-bottom:5px;">
+        <div class="input-group" style="margin-top:12px; margin-bottom:5px;">
             <label>Metode Pembayaran</label>
             <select id="cart-payment">
                 <option value="Tunai">💵 Tunai</option>
@@ -273,10 +269,23 @@
             </select>
         </div>
 
+        <div class="input-group" style="margin-top:10px; margin-bottom:5px;">
+            <label>Diskon / Potongan Harga (Rp)</label>
+            <input type="text" id="cart-discount" placeholder="Rp 0" onkeyup="fmtRp(this); updateCartModal();">
+        </div>
+
         <div class="modal-footer">
-            <div class="modal-total-row">
+            <div class="modal-total-row" style="font-size: 13px; color: #718096; margin-bottom: 2px;">
                 <span>Subtotal</span>
                 <span id="modal-subtotal">Rp 0</span>
+            </div>
+            <div class="modal-total-row" style="font-size: 13px; color: #d32f2f; margin-bottom: 8px;">
+                <span>Diskon</span>
+                <span id="modal-discount-display">-Rp 0</span>
+            </div>
+            <div class="modal-total-row" style="font-size: 17px; border-top: 1px dashed #eee; padding-top: 8px;">
+                <span>Total Akhir</span>
+                <span id="modal-grand-total">Rp 0</span>
             </div>
             <div class="modal-footer-btns">
                 <button class="btn-reset" onclick="resetCartOnly()">Reset</button>
@@ -286,7 +295,6 @@
     </div>
 </div>
 
-<!-- Fitur Baru: Calculator Modal Overlay -->
 <div id="calc-modal-overlay" class="modal-overlay" onclick="closeCalcModal(event)">
     <div id="calc-box">
         <div class="calc-header">
@@ -332,9 +340,8 @@ const MENUS = [
     {label:"Coffee Milk",harga:7000},{label:"Coffee Aren",harga:8000},
     {label:"Coffee Milo",harga:10000},{label:"Coffee Honey",harga:11000},
     {label:"Coffee Latte",harga:10000},{label:"Rimba Signature",harga:11000},
-    {label:"Salted Caramel",harga:12000},{label:"Vanilla Latte",harga:12000},{label:"Moccacino",harga:13000},{label:"Cappucinno",harga:13000},{label:"Machiato",harga:13000},
-    {label:"Hazelnut Latte",harga:12000},{label:"Fresh Milk",harga:8000},
-    {label:"Chocolate",harga:8000},{label:"Strawberry",harga:8000},
+    {label:"Salted Caramel",harga:12000},{label:"Vanilla Latte",harga:12000},{label:"Hazelnut Latte",harga:12000},{label:"Moccacino",harga:13000},{label:"Cappucinno",harga:13000},{label:"Machiato",harga:13000},
+    {label:"Fresh Milk",harga:8000},{label:"Chocolate",harga:8000},{label:"Strawberry",harga:8000},
     {label:"Manggo",harga:8000},{label:"Thaitea",harga:8000},
     {label:"Taro",harga:8000},{label:"Matcha",harga:9000},{label:"Milo",harga:9000},{label:"Avocado",harga:9000},{label:"Milky Caramel",harga:10000},{label:"Milky Hazelnut",harga:10000},{label:"Milky Vanilla",harga:10000},{label:"Gratis",harga:0}
 ];
@@ -501,7 +508,6 @@ function chgQty(name, delta) {
     updateAll();
 }
 
-// Fitur Baru: Fungsi Tambah Menu Custom
 function addCustomMenu() {
     const nameInput = document.getElementById('custom-name');
     const priceInput = document.getElementById('custom-price');
@@ -523,8 +529,10 @@ function confirmOrder() {
     
     const custInput = document.getElementById('cart-customer-name');
     const paymentInput = document.getElementById('cart-payment');
+    const discInput = document.getElementById('cart-discount');
     const custName = custInput.value.trim() || "Pelanggan"; 
     const paymentMethod = paymentInput.value || "Tunai";
+    const discount = discInput ? cleanNum(discInput.value) : 0;
     
     orderCounter++;
     let sub = 0, cups = 0, items = [];
@@ -534,19 +542,23 @@ function confirmOrder() {
         items.push({ name: k, qty: cart[k].qty, harga: cart[k].harga });
     }
     
+    const grandTotal = Math.max(0, sub - discount);
+    
     sessionOrders.push({ 
         id: orderCounter, 
         time: fmtTime(now()), 
         customer: custName,
         payment: paymentMethod, 
         items, 
-        subtotal: sub, 
+        subtotal: grandTotal, 
+        discount: discount,
         totalCup: cups 
     });
     
     cart = {};
     custInput.value = ""; 
     paymentInput.value = "Tunai"; 
+    if(discInput) discInput.value = "";
     updateAll();
     closeCartModal();
     showToast(`Pesanan #${orderCounter} (${paymentMethod}) dikonfirmasi!`);
@@ -602,17 +614,25 @@ function updateCartModal() {
     if (Object.keys(cart).length === 0) {
         container.innerHTML = '<div style="text-align:center; color:#888; padding:20px;">Keranjang Kosong</div>';
     }
+
+    const discInput = document.getElementById('cart-discount');
+    const discount = discInput ? cleanNum(discInput.value) : 0;
+    const grandTotal = Math.max(0, subtotal - discount);
+
     document.getElementById('modal-subtotal').innerText = "Rp " + subtotal.toLocaleString('id-ID');
+    document.getElementById('modal-discount-display').innerText = "-Rp " + discount.toLocaleString('id-ID');
+    document.getElementById('modal-grand-total').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
 }
 
 function resetCartOnly() {
     cart = {};
+    const discInput = document.getElementById('cart-discount');
+    if(discInput) discInput.value = "";
     updateAll();
     closeCartModal();
     showToast("Keranjang dibersihkan");
 }
 
-// Fitur Baru: Logika Kalkulator
 let calcValue = "";
 function toggleCalc() {
     const overlay = document.getElementById('calc-modal-overlay');
@@ -708,13 +728,14 @@ function renderRiwayat() {
             <div class="riwayat-row" style="border-bottom:1px solid #eee; padding:10px 0">
                 <div style="display:flex; justify-content:space-between; margin-bottom: 2px;">
                     <b>#${o.id} - ${o.customer}</b>
-                    <span style="color:#d32f2f; font-weight:bold">Rp ${o.subtotal.toLocaleString('id-ID')}</span>
+                    <span style="color:#2e7d32; font-weight:bold">Rp ${o.subtotal.toLocaleString('id-ID')}</span>
                 </div>
                 <div style="font-size:11px; color:#999; margin-bottom:4px; display:flex; justify-content:space-between">
                     <span>🕒 ${o.time}</span>
                     <span style="background:#f1f5f9; padding:2px 6px; border-radius:4px; font-weight:600; color:#475569;">💳 ${o.payment}</span>
                 </div>
                 <small style="color:#666">${o.items.map(i => i.name + " x" + i.qty).join(", ")}</small>
+                ${o.discount > 0 ? `<br><small style="color:#d32f2f; font-weight:600;">✂️ Diskon: Rp ${o.discount.toLocaleString('id-ID')}</small>` : ''}
             </div>`;
     });
 }
@@ -725,7 +746,8 @@ function exportRiwayat() {
     sessionOrders.forEach(o => {
         text += `*#${o.id} - ${o.customer}* (${o.time}) - [${o.payment}]\n`;
         text += o.items.map(i => `- ${i.name} x${i.qty}`).join("\n") + "\n";
-        text += `Subtotal: Rp ${o.subtotal.toLocaleString('id-ID')}\n\n`;
+        if (o.discount > 0) text += `Diskon: Rp ${o.discount.toLocaleString('id-ID')}\n`;
+        text += `Total Net: Rp ${o.subtotal.toLocaleString('id-ID')}\n\n`;
     });
     navigator.clipboard.writeText(text).then(() => showToast("Riwayat disalin ke clipboard!"));
 }
@@ -775,8 +797,9 @@ async function checkout() {
     const totalCup = sessionOrders.reduce((a, o) => a + o.totalCup, 0);
     const totalKeluar = expenses.reduce((a, b) => a + b.price, 0);
     
-    let omzetTunai = 0, omzetQRIS = 0, omzetOnline = 0;
+    let omzetTunai = 0, omzetQRIS = 0, omzetOnline = 0, totalDiskonSesi = 0;
     sessionOrders.forEach(o => {
+        totalDiskonSesi += (o.discount || 0);
         if (o.payment === 'Tunai') omzetTunai += o.subtotal;
         else if (o.payment === 'QRIS') omzetQRIS += o.subtotal;
         else if (o.payment === 'Online') omzetOnline += o.subtotal;
@@ -828,7 +851,11 @@ async function checkout() {
     teks += `*METODE PEMBAYARAN:*\n`;
     teks += `💵 Tunai: Rp ${omzetTunai.toLocaleString('id-ID')}\n`;
     teks += `📱 QRIS: Rp ${omzetQRIS.toLocaleString('id-ID')}\n`;
-    teks += `🛵 Online: Rp ${omzetOnline.toLocaleString('id-ID')}\n━━━━━━━━━━━━\n\n`;
+    teks += `🛵 Online: Rp ${omzetOnline.toLocaleString('id-ID')}\n`;
+    if (totalDiskonSesi > 0) {
+        teks += `🔻 Total Diskon: Rp ${totalDiskonSesi.toLocaleString('id-ID')}\n`;
+    }
+    teks += `━━━━━━━━━━━━\n\n`;
 
     teks += `*DETAIL MENU TERJUAL:*\n${detailTerjualTeks}\n━━━━━━━━━━━━\n\n`;
     
@@ -844,7 +871,7 @@ async function checkout() {
 function resetSemuaData() {
     sessionOrders = []; expenses = []; cart = {}; orderCounter = 0;
     
-    const fields = ['p_rupiah', 'stok_cup', 'stok_bahan', 'stok_note', 'exp-name', 'exp-price', 'cart-customer-name', 'custom-name', 'custom-price'];
+    const fields = ['p_rupiah', 'stok_cup', 'stok_bahan', 'stok_note', 'exp-name', 'exp-price', 'cart-customer-name', 'custom-name', 'custom-price', 'cart-discount'];
     fields.forEach(id => { const el = document.getElementById(id); if(el) el.value = ""; });
     
     renderExpenses();
