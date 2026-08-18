@@ -333,7 +333,7 @@
 // ==========================================
 // 1. KONFIGURASI & STATE
 // ==========================================
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzDZCnFqxHa0CGVFiipxoCAj6UUbdxkCnwwvK89e4ET2xfU4iTlmAgSgh4mF2YM2I4/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyNDM08iDU2i4bmkW7N_TmMNagdezGqwKUqO4emmRrYGTJVjPd1bssr9iF2SQ0hR1tj/exec";
 const ADMIN = "6285117010280";
 const MENUS = [
     {label:"Americano Ice",harga:6000},{label:"Americano Double",harga:8000},
@@ -767,18 +767,28 @@ function openTab(id, btn) {
 // ==========================================
 async function sendToSheet(payload) {
     try {
+        // Konversi objek payload menjadi format Form Data (URLSearchParams)
+        const formData = new URLSearchParams();
+        for (const key in payload) {
+            formData.append(key, payload[key]);
+        }
+
+        // Kirim ke Google Apps Script
         await fetch(SCRIPT_URL, {
-            method: 'POST', mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify(payload)
+            method: 'POST',
+            mode: 'no-cors', // Menghindari block CORS dari browser
+            headers: { 
+                'Content-Type': 'application/x-www-form-urlencoded' 
+            },
+            body: formData.toString()
         });
+        
         return true;
     } catch (error) {
         console.error("Gagal kirim ke Sheet:", error);
         return false;
     }
 }
-
 async function checkout() {
     const nama = document.getElementById('p_nama')?.value.trim();
     const outlet = document.getElementById('p_outlet')?.value;
