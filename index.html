@@ -821,8 +821,10 @@ async function checkout() {
     let itemRekap = {};
     sessionOrders.forEach(order => {
         order.items.forEach(item => {
-            if(!itemRekap[item.name]) itemRekap[item.name] = 0;
-            itemRekap[item.name] += item.qty;
+            // Modifikasi: Menggabungkan nama menu dengan metode pembayarannya
+            let namaKunci = `${item.name} (${order.payment})`;
+            if(!itemRekap[namaKunci]) itemRekap[namaKunci] = 0;
+            itemRekap[namaKunci] += item.qty;
         });
     });
 
